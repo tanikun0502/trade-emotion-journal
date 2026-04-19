@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trade Emotion Journal</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --primary: #4F6EF7;
+    --primary-dark: #3B56D9;
+    --primary-light: #EEF2FF;
+    --secondary: #7C3AED;
+    --secondary-light: #F5F0FF;
+    --success: #10B981;
+    --success-light: #ECFDF5;
+    --danger: #EF4444;
+    --danger-light: #FEF2F2;
+    --warning: #F59E0B;
+    --warning-light: #FFFBEB;
+    --text-primary: #1E293B;
+    --text-secondary: #64748B;
+    --text-muted: #94A3B8;
+    --border: #E2E8F0;
+    --bg: #F8FAFF;
+    --card: #FFFFFF;
+    --nav-h: 64px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+  }
+
+  /* ====== NAVBAR ====== */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    height: var(--nav-h);
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 24px;
+    gap: 8px;
+  }
+  .nav-logo {
+    display: flex; align-items: center; gap: 8px;
+    font-weight: 700; font-size: 18px;
+    color: var(--primary);
+    margin-right: 32px;
+    text-decoration: none;
+  }
+  .nav-logo .logo-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 16px;
+  }
+  .nav-tabs { display: flex; gap: 4px; flex: 1; }
+  .nav-tab {
+    padding: 8px 16px;
+    border: none; background: none;
+    cursor: pointer; font-size: 14px;
+    color: var(--text-secondary);
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.15s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .nav-tab:hover { background: var(--primary-light); color: var(--primary); }
+  .nav-tab.active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
+  .nav-actions { display: flex; gap: 8px; }
+  .btn-new {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    border: none; padding: 9px 20px;
+    border-radius: 10px; font-size: 14px;
+    font-weight: 600; cursor: pointer;
+    transition: opacity 0.15s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .btn-new:hover { opacity: 0.9; }
+
+  /* ====== LAYOUT ====== */
+  main {
+    padding-top: calc(var(--nav-h) + 24px);
+    padding-bottom: 48px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ====== CARDS ====== */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+  }
+  .card-sm { border-radius: 12px; padding: 20px; }
+  .card-title {
+    font-size: 16px; font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-title .icon {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+
+  /* ====== DASHBOARD ====== */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 900px) { .stats-grid { grid-template-columns: repeat(2,1fr); } }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  }
+  .stat-card.blue::before { background: linear-gradient(90deg, var(--primary), var(--secondary)); }
+  .stat-card.green::before { background: linear-gradient(90deg, var(--success), #34D399); }
+  .stat-card.red::before { background: linear-gradient(90deg, var(--danger), #F97316); }
+  .stat-card.purple::before { background: linear-gradient(90deg, var(--secondary), #A78BFA); }
+  .stat-label { font-size: 12px; color: var(--text-muted); font-weight: 500; margin-bottom: 8px; }
+  .stat-value { font-size: 28px; font-weight: 700; line-height: 1; }
+  .stat-value.up { color: var(--success); }
+  .stat-value.down { color: var(--danger); }
+  .stat-sub { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 900px) { .charts-grid { grid-template-columns: 1fr; } }
+  .chart-wrapper { height: 260px; position: relative; }
+
+  /* Emotion ranking */
+  .emotion-rank-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .emotion-rank-item:last-child { border-bottom: none; }
+  .emotion-badge {
+    font-size: 20px;
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg);
+    flex-shrink: 0;
+  }
+  .emotion-rank-info { flex: 1; }
+  .emotion-rank-name { font-size: 13px; font-weight: 600; }
+  .emotion-rank-detail { font-size: 12px; color: var(--text-muted); }
+  .emotion-win-bar { height: 6px; border-radius: 3px; background: var(--border); margin-top: 4px; overflow: hidden; }
+  .emotion-win-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
+  .emotion-rank-pct { font-size: 14px; font-weight: 700; min-width: 40px; text-align: right; }
+
+  /* ====== FORM ====== */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 700px) { .form-grid { grid-template-columns: 1fr; } }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-label {
+    font-size: 13px; font-weight: 600;
+    color: var(--text-secondary);
+    display: flex; align-items: center; gap: 4px;
+  }
+  .form-label .required { color: var(--danger); }
+  .form-input, .form-select, .form-textarea {
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: 14px;
+    color: var(--text-primary);
+    background: white;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    outline: none;
+    font-family: inherit;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79,110,247,0.12);
+  }
+  .form-textarea { resize: vertical; min-height: 80px; }
+
+  /* Emotion tags */
+  .emotion-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+  .emotion-tag {
+    padding: 8px 14px;
+    border: 2px solid var(--border);
+    border-radius: 24px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: white;
+    font-weight: 500;
+    user-select: none;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .emotion-tag:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+  .emotion-tag.selected { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+  .emotion-tag.selected-confident { border-color: #10B981; color: #10B981; background: #ECFDF5; }
+  .emotion-tag.selected-fomo { border-color: #F59E0B; color: #F59E0B; background: #FFFBEB; }
+  .emotion-tag.selected-boredom { border-color: #94A3B8; color: #64748B; background: #F1F5F9; }
+  .emotion-tag.selected-fear { border-color: #EF4444; color: #EF4444; background: #FEF2F2; }
+  .emotion-tag.selected-revenge { border-color: #EF4444; color: #EF4444; background: #FEF2F2; }
+  .emotion-tag.selected-calm { border-color: #4F6EF7; color: #4F6EF7; background: #EEF2FF; }
+  .emotion-tag.selected-greed { border-color: #F59E0B; color: #D97706; background: #FFFBEB; }
+
+  /* Direction buttons */
+  .direction-group { display: flex; gap: 8px; }
+  .direction-btn {
+    flex: 1; padding: 10px;
+    border: 2px solid var(--border);
+    border-radius: 10px; cursor: pointer;
+    font-size: 14px; font-weight: 600;
+    transition: all 0.15s; background: white;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .direction-btn.buy.selected { border-color: var(--success); background: var(--success-light); color: var(--success); }
+  .direction-btn.sell.selected { border-color: var(--danger); background: var(--danger-light); color: var(--danger); }
+  .direction-btn:not(.selected):hover { border-color: var(--primary); }
+
+  /* YES/NO */
+  .yn-group { display: flex; gap: 8px; }
+  .yn-btn {
+    flex: 1; padding: 10px;
+    border: 2px solid var(--border);
+    border-radius: 10px; cursor: pointer;
+    font-size: 14px; font-weight: 600;
+    transition: all 0.15s; background: white;
+  }
+  .yn-btn.yes.selected { border-color: var(--success); background: var(--success-light); color: var(--success); }
+  .yn-btn.no.selected { border-color: var(--danger); background: var(--danger-light); color: var(--danger); }
+
+  /* Form actions */
+  .form-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }
+  .btn {
+    padding: 10px 24px; border-radius: 10px;
+    font-size: 14px; font-weight: 600;
+    cursor: pointer; border: none;
+    transition: all 0.15s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+  }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-secondary {
+    background: var(--bg); color: var(--text-secondary);
+    border: 1.5px solid var(--border);
+  }
+  .btn-secondary:hover { background: white; border-color: var(--primary); color: var(--primary); }
+  .btn-danger { background: var(--danger-light); color: var(--danger); border: 1.5px solid #FECACA; }
+  .btn-success { background: var(--success-light); color: var(--success); border: 1.5px solid #A7F3D0; }
+  .btn-sm { padding: 6px 14px; font-size: 12px; border-radius: 8px; }
+
+  /* ====== TRADE LIST ====== */
+  .trade-list { display: flex; flex-direction: column; gap: 12px; }
+  .trade-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 20px;
+    display: flex; align-items: center; gap: 16px;
+    transition: box-shadow 0.15s;
+  }
+  .trade-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+  .trade-direction {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .trade-direction.buy { background: var(--success-light); color: var(--success); }
+  .trade-direction.sell { background: var(--danger-light); color: var(--danger); }
+  .trade-info { flex: 1; min-width: 0; }
+  .trade-symbol { font-size: 15px; font-weight: 700; }
+  .trade-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .trade-emotions { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+  .trade-emotion-badge {
+    font-size: 16px;
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg);
+    border: 1px solid var(--border);
+  }
+  .trade-prices { text-align: right; min-width: 120px; }
+  .trade-price-val { font-size: 15px; font-weight: 600; }
+  .trade-pnl { font-size: 13px; font-weight: 700; margin-top: 4px; }
+  .pnl-pos { color: var(--success); }
+  .pnl-neg { color: var(--danger); }
+  .trade-actions { display: flex; flex-direction: column; gap: 6px; min-width: 90px; }
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+  }
+  .status-open { background: var(--primary-light); color: var(--primary); }
+  .status-closed { background: #F1F5F9; color: var(--text-muted); }
+  .status-win { background: var(--success-light); color: var(--success); }
+  .status-loss { background: var(--danger-light); color: var(--danger); }
+
+  /* ====== MODAL ====== */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: white;
+    border-radius: 20px;
+    padding: 28px;
+    width: 100%; max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    transform: translateY(10px);
+    transition: transform 0.2s;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .modal-title { font-size: 18px; font-weight: 700; }
+  .modal-close {
+    width: 32px; height: 32px; border-radius: 8px;
+    border: none; background: var(--bg);
+    cursor: pointer; font-size: 16px;
+    color: var(--text-muted);
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .modal-close:hover { background: var(--border); }
+
+  /* ====== PAGE HEADER ====== */
+  .page-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .page-title { font-size: 22px; font-weight: 700; }
+  .page-subtitle { font-size: 14px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ====== FILTER BAR ====== */
+  .filter-bar {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .filter-chip {
+    padding: 6px 14px; border: 1.5px solid var(--border);
+    border-radius: 20px; font-size: 12px; font-weight: 500;
+    cursor: pointer; background: white;
+    transition: all 0.15s; color: var(--text-secondary);
+  }
+  .filter-chip:hover, .filter-chip.active {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    color: var(--primary);
+  }
+
+  /* ====== EMPTY STATE ====== */
+  .empty-state {
+    text-align: center; padding: 60px 20px;
+    color: var(--text-muted);
+  }
+  .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+  .empty-state p { font-size: 15px; margin-bottom: 8px; color: var(--text-secondary); }
+  .empty-state small { font-size: 13px; }
+
+  /* PNL calculated display */
+  .pnl-preview {
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 14px; font-weight: 600;
+    display: none;
+    margin-top: 8px;
+  }
+  .pnl-preview.show { display: block; }
+  .pnl-preview.pos { background: var(--success-light); color: var(--success); border: 1px solid #A7F3D0; }
+  .pnl-preview.neg { background: var(--danger-light); color: var(--danger); border: 1px solid #FECACA; }
+
+  /* discipline meter */
+  .discipline-ring {
+    display: flex; align-items: center; gap: 20px;
+    padding: 16px 0;
+  }
+  .ring-svg { width: 80px; height: 80px; flex-shrink: 0; }
+  .ring-bg { fill: none; stroke: var(--border); stroke-width: 8; }
+  .ring-fill { fill: none; stroke: var(--primary); stroke-width: 8; stroke-linecap: round;
+    transition: stroke-dashoffset 0.8s; transform-origin: center; transform: rotate(-90deg); }
+  .ring-text { font-size: 16px; font-weight: 700; fill: var(--text-primary); }
+  .ring-label { font-size: 10px; fill: var(--text-muted); }
+  .ring-info h3 { font-size: 18px; font-weight: 700; }
+  .ring-info p { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+  /* export buttons */
+  .export-bar {
+    display: flex; gap: 8px;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    z-index: 999;
+    background: var(--text-primary); color: white;
+    padding: 12px 20px; border-radius: 12px;
+    font-size: 14px; font-weight: 500;
+    transform: translateY(80px); opacity: 0;
+    transition: all 0.3s;
+    max-width: 300px;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { background: var(--success); }
+  .toast.error { background: var(--danger); }
+
+  /* Section divider */
+  .section-title {
+    font-size: 13px; font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 12px;
+    margin-top: 24px;
+  }
+  .section-title:first-child { margin-top: 0; }
+
+  /* hero gradient text */
+  .gradient-text {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav>
+  <a class="nav-logo" href="#">
+    <div class="logo-icon">📊</div>
+    Trade Emotion
+  </a>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('dashboard')" id="tab-dashboard">📈 ダッシュボード</button>
+    <button class="nav-tab" onclick="showPage('open')" id="tab-open">🔓 保有中 <span id="open-count-badge" style="background:var(--primary);color:white;border-radius:10px;padding:1px 6px;font-size:11px;display:none"></span></button>
+    <button class="nav-tab" onclick="showPage('history')" id="tab-history">📜 履歴</button>
+  </div>
+  <div class="nav-actions">
+    <button class="btn-new" onclick="openEntryModal()">＋ 新規エントリー</button>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main>
+
+  <!-- ========== DASHBOARD PAGE ========== -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-header">
+      <div>
+        <div class="page-title">ダッシュボード <span class="gradient-text">分析</span></div>
+        <div class="page-subtitle">あなたのトレード心理パターンを可視化</div>
+      </div>
+      <div class="export-bar">
+        <button class="btn btn-secondary btn-sm" onclick="exportJSON()">⬇ JSON</button>
+        <button class="btn btn-secondary btn-sm" onclick="exportCSV()">⬇ CSV</button>
+      </div>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="stats-grid">
+      <div class="stat-card blue">
+        <div class="stat-label">総トレード数</div>
+        <div class="stat-value" id="stat-total">0</div>
+        <div class="stat-sub">決済済み件数</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">勝率</div>
+        <div class="stat-value" id="stat-winrate">—</div>
+        <div class="stat-sub" id="stat-wl">勝 0 / 負 0</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-label">累計損益</div>
+        <div class="stat-value" id="stat-pnl">¥0</div>
+        <div class="stat-sub" id="stat-pnl-sub">平均損益 ¥0</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-label">規律遵守率</div>
+        <div class="stat-value" id="stat-discipline">—</div>
+        <div class="stat-sub" id="stat-discipline-sub">ルールを守れた割合</div>
+      </div>
+    </div>
+
+    <!-- Charts row -->
+    <div class="charts-grid">
+      <div class="card">
+        <div class="card-title" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <span style="display:flex;align-items:center;gap:8px"><span class="icon" style="background:#EEF2FF">📈</span>資産推移</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:12px;color:var(--text-muted);font-weight:400">初期資金</span>
+            <div style="display:flex;align-items:center;gap:0;border:1.5px solid var(--border);border-radius:8px;overflow:hidden;background:white">
+              <span style="padding:5px 8px;font-size:12px;color:var(--text-muted);background:var(--bg);border-right:1px solid var(--border)">¥</span>
+              <input id="capital-input" type="number" step="10000" placeholder="1000000"
+                style="border:none;outline:none;padding:5px 8px;font-size:13px;width:110px;font-family:inherit"
+                onchange="saveCapital()" oninput="saveCapital()">
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:16px;margin-bottom:8px;flex-wrap:wrap">
+          <div id="capital-current-label" style="font-size:12px;color:var(--text-muted)"></div>
+          <div id="capital-return-label" style="font-size:12px;font-weight:600"></div>
+        </div>
+        <div class="chart-wrapper"><canvas id="pnlChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon" style="background:#F5F0FF">🥧</span>勝敗分布</div>
+        <div class="chart-wrapper"><canvas id="winChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Emotion ranking + Discipline -->
+    <div class="charts-grid">
+      <div class="card">
+        <div class="card-title"><span class="icon" style="background:#FFFBEB">🧠</span>感情別 勝率ランキング</div>
+        <div id="emotion-ranking">
+          <div class="empty-state" style="padding:30px 0">
+            <div class="icon">😶</div>
+            <p>まだデータがありません</p>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon" style="background:#ECFDF5">⚖️</span>規律メーター</div>
+        <div class="discipline-ring">
+          <svg class="ring-svg" viewBox="0 0 80 80">
+            <circle class="ring-bg" cx="40" cy="40" r="32"/>
+            <circle class="ring-fill" cx="40" cy="40" r="32" id="ring-fill-el"
+              stroke-dasharray="201" stroke-dashoffset="201"/>
+            <text x="40" y="37" text-anchor="middle" class="ring-text" id="ring-pct-text">—</text>
+            <text x="40" y="50" text-anchor="middle" class="ring-label">守れた</text>
+          </svg>
+          <div class="ring-info">
+            <h3 id="ring-kept-count">0 / 0</h3>
+            <p>ルール遵守トレード</p>
+            <p id="ring-msg" style="margin-top:8px;font-size:12px;color:var(--text-muted)">決済済みのトレードが増えると表示されます</p>
+          </div>
+        </div>
+        <div class="section-title" style="margin-top:16px">感情別 平均損益 TOP</div>
+        <div id="emotion-pnl-ranking">
+          <div style="font-size:13px;color:var(--text-muted)">データなし</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== OPEN TRADES PAGE ========== -->
+  <div class="page" id="page-open">
+    <div class="page-header">
+      <div>
+        <div class="page-title">保有中のポジション</div>
+        <div class="page-subtitle" id="open-sub">現在エントリー中のトレード</div>
+      </div>
+      <button class="btn btn-primary" onclick="openEntryModal()">＋ 新規エントリー</button>
+    </div>
+    <div id="open-list">
+      <div class="empty-state">
+        <div class="icon">🔓</div>
+        <p>保有中のポジションはありません</p>
+        <small>「新規エントリー」から記録を始めましょう</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== HISTORY PAGE ========== -->
+  <div class="page" id="page-history">
+    <div class="page-header">
+      <div>
+        <div class="page-title">トレード履歴</div>
+        <div class="page-subtitle" id="history-sub">過去のトレード記録</div>
+      </div>
+      <div class="export-bar">
+        <button class="btn btn-secondary btn-sm" onclick="exportJSON()">⬇ JSON</button>
+        <button class="btn btn-secondary btn-sm" onclick="exportCSV()">⬇ CSV</button>
+      </div>
+    </div>
+    <div class="filter-bar">
+      <button class="filter-chip active" onclick="setHistoryFilter('all', this)">すべて</button>
+      <button class="filter-chip" onclick="setHistoryFilter('win', this)">✅ 勝ち</button>
+      <button class="filter-chip" onclick="setHistoryFilter('loss', this)">❌ 負け</button>
+      <button class="filter-chip" onclick="setHistoryFilter('discipline', this)">⚖️ 規律あり</button>
+    </div>
+    <div id="history-list">
+      <div class="empty-state">
+        <div class="icon">📜</div>
+        <p>まだ決済済みのトレードがありません</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ========== ENTRY MODAL ========== -->
+<div class="modal-overlay" id="entry-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📝 新規エントリー記録</div>
+      <button class="modal-close" onclick="closeEntryModal()">✕</button>
+    </div>
+    <form id="entry-form" onsubmit="submitEntry(event)">
+      <div class="section-title">基本情報</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">銘柄コード <span class="required">*</span></label>
+          <input class="form-input" id="f-symbol" placeholder="例: 7203" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">銘柄名</label>
+          <input class="form-input" id="f-name" placeholder="例: トヨタ自動車">
+        </div>
+        <div class="form-group full">
+          <label class="form-label">売買区分 <span class="required">*</span></label>
+          <div class="direction-group">
+            <button type="button" class="direction-btn buy selected" id="dir-buy" onclick="setDirection('buy')">▲ 買い (Long)</button>
+            <button type="button" class="direction-btn sell" id="dir-sell" onclick="setDirection('sell')">▼ 売り (Short)</button>
+          </div>
+          <input type="hidden" id="f-direction" value="buy">
+        </div>
+        <div class="form-group">
+          <label class="form-label">エントリー価格 <span class="required">*</span></label>
+          <input class="form-input" id="f-entry" type="number" step="0.01" placeholder="例: 2500" required oninput="calcPnlPreview()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">数量（株/枚）</label>
+          <input class="form-input" id="f-qty" type="number" step="1" placeholder="例: 100" oninput="calcPnlPreview()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">利確ライン</label>
+          <input class="form-input" id="f-target" type="number" step="0.01" placeholder="例: 2700">
+        </div>
+        <div class="form-group">
+          <label class="form-label">損切りライン</label>
+          <input class="form-input" id="f-stop" type="number" step="0.01" placeholder="例: 2400">
+        </div>
+      </div>
+
+      <div class="section-title">心理状態（感情タグ）<span style="color:var(--danger);font-size:11px"> 1つ以上選択</span></div>
+      <div class="emotion-tags" id="entry-emotion-tags">
+        <button type="button" class="emotion-tag" data-id="confident" onclick="toggleEmotion(this)">🚀 自信満々</button>
+        <button type="button" class="emotion-tag" data-id="fomo" onclick="toggleEmotion(this)">🏃 焦り・飛び乗り</button>
+        <button type="button" class="emotion-tag" data-id="boredom" onclick="toggleEmotion(this)">🥱 暇つぶし</button>
+        <button type="button" class="emotion-tag" data-id="fear" onclick="toggleEmotion(this)">😨 恐怖・ビクビク</button>
+        <button type="button" class="emotion-tag" data-id="revenge" onclick="toggleEmotion(this)">💢 リベンジ</button>
+        <button type="button" class="emotion-tag" data-id="calm" onclick="toggleEmotion(this)">🧠 冷静・分析的</button>
+        <button type="button" class="emotion-tag" data-id="greed" onclick="toggleEmotion(this)">🤑 欲望・強欲</button>
+      </div>
+      <div id="emotion-error" style="color:var(--danger);font-size:12px;margin-top:6px;display:none">感情タグを1つ以上選択してください</div>
+
+      <div class="section-title" style="margin-top:20px">エントリー根拠</div>
+      <div class="form-group">
+        <label class="form-label">なぜ買った（売った）のか？ <span class="required">*</span></label>
+        <textarea class="form-textarea" id="f-note" placeholder="例: 5日線が20日線を上抜けたゴールデンクロスを確認。出来高も増加しており上昇トレンド転換の可能性。" required></textarea>
+      </div>
+      <div class="form-group" style="margin-top:12px">
+        <label class="form-label">チャートURL <span style="color:var(--text-muted);font-weight:400">（任意）</span></label>
+        <input class="form-input" id="f-chart-url" type="url" placeholder="例: https://finance.yahoo.co.jp/chart/7203.T">
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeEntryModal()">キャンセル</button>
+        <button type="submit" class="btn btn-primary">📝 エントリーを記録</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ========== CLOSE MODAL ========== -->
+<div class="modal-overlay" id="close-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🏁 決済記録</div>
+      <button class="modal-close" onclick="closeCloseModal()">✕</button>
+    </div>
+    <div id="close-modal-header" style="background:var(--bg);border-radius:12px;padding:16px;margin-bottom:20px">
+      <div style="font-weight:700;font-size:16px" id="cm-symbol">—</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-top:4px" id="cm-meta">—</div>
+    </div>
+    <form id="close-form" onsubmit="submitClose(event)">
+      <input type="hidden" id="cf-id">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label class="form-label">決済価格 <span class="required">*</span></label>
+          <input class="form-input" id="cf-exit" type="number" step="0.01" placeholder="決済価格を入力" required oninput="calcClosePnl()">
+          <div class="pnl-preview" id="pnl-preview"></div>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">ルールを守れましたか？ <span class="required">*</span></label>
+          <div class="yn-group">
+            <button type="button" class="yn-btn yes" id="yn-yes" onclick="setYN(true)">✅ YES — 守れた</button>
+            <button type="button" class="yn-btn no" id="yn-no" onclick="setYN(false)">❌ NO — 守れなかった</button>
+          </div>
+          <input type="hidden" id="cf-discipline" value="">
+        </div>
+        <div class="form-group full">
+          <label class="form-label">一言反省・気づき</label>
+          <textarea class="form-textarea" id="cf-note" placeholder="例: 損切りラインを引き下げてしまった。感情的になっていた。"></textarea>
+        </div>
+      </div>
+      <div id="discipline-error" style="color:var(--danger);font-size:12px;margin-top:-8px;margin-bottom:8px;display:none">YES/NOを選択してください</div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeCloseModal()">キャンセル</button>
+        <button type="submit" class="btn btn-primary">🏁 決済を記録</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ==================== DATA ====================
+const STORAGE_KEY = 'trade_emotion_journal_v1';
+const CAPITAL_KEY = 'trade_emotion_capital_v1';
+const EMOTIONS = {
+  confident: { label: '自信満々', emoji: '🚀', color: '#10B981' },
+  fomo:      { label: '焦り・飛び乗り', emoji: '🏃', color: '#F59E0B' },
+  boredom:   { label: '暇つぶし', emoji: '🥱', color: '#94A3B8' },
+  fear:      { label: '恐怖・ビクビク', emoji: '😨', color: '#EF4444' },
+  revenge:   { label: 'リベンジ', emoji: '💢', color: '#EF4444' },
+  calm:      { label: '冷静・分析的', emoji: '🧠', color: '#4F6EF7' },
+  greed:     { label: '欲望・強欲', emoji: '🤑', color: '#F59E0B' },
+};
+
+function loadData() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  catch(e) { return []; }
+}
+function saveData(d) { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); }
+function loadCapital() {
+  const v = parseFloat(localStorage.getItem(CAPITAL_KEY));
+  return isNaN(v) ? null : v;
+}
+function saveCapital() {
+  const v = parseFloat(document.getElementById('capital-input').value);
+  if (!isNaN(v) && v > 0) {
+    localStorage.setItem(CAPITAL_KEY, v);
+  } else {
+    localStorage.removeItem(CAPITAL_KEY);
+  }
+  renderDashboard();
+}
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+let trades = loadData();
+let historyFilter = 'all';
+let pnlChartInst = null;
+let winChartInst = null;
+
+// ==================== NAVIGATION ====================
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'open') renderOpen();
+  if (name === 'history') renderHistory();
+}
+
+// ==================== ENTRY MODAL ====================
+function openEntryModal() {
+  document.getElementById('entry-form').reset();
+  document.querySelectorAll('#entry-emotion-tags .emotion-tag').forEach(t => {
+    t.className = 'emotion-tag';
+  });
+  setDirection('buy');
+  document.getElementById('emotion-error').style.display = 'none';
+  document.getElementById('entry-modal').classList.add('open');
+}
+function closeEntryModal() {
+  document.getElementById('entry-modal').classList.remove('open');
+}
+
+function setDirection(dir) {
+  document.getElementById('f-direction').value = dir;
+  document.getElementById('dir-buy').className = 'direction-btn buy' + (dir==='buy'?' selected':'');
+  document.getElementById('dir-sell').className = 'direction-btn sell' + (dir==='sell'?' selected':'');
+}
+
+function toggleEmotion(el) {
+  const id = el.dataset.id;
+  if (el.classList.contains('selected') || el.classList.contains('selected-' + id)) {
+    el.className = 'emotion-tag';
+  } else {
+    el.className = 'emotion-tag selected-' + id;
+  }
+}
+
+function getSelectedEmotions() {
+  return [...document.querySelectorAll('#entry-emotion-tags .emotion-tag')].filter(t => {
+    return t.className !== 'emotion-tag';
+  }).map(t => t.dataset.id);
+}
+
+function calcPnlPreview() { /* no-op for entry */ }
+
+function submitEntry(e) {
+  e.preventDefault();
+  const emotions = getSelectedEmotions();
+  if (!emotions.length) {
+    document.getElementById('emotion-error').style.display = 'block';
+    return;
+  }
+  document.getElementById('emotion-error').style.display = 'none';
+
+  const trade = {
+    id: genId(),
+    createdAt: new Date().toISOString(),
+    symbol: document.getElementById('f-symbol').value.trim(),
+    symbolName: document.getElementById('f-name').value.trim(),
+    direction: document.getElementById('f-direction').value,
+    entryPrice: parseFloat(document.getElementById('f-entry').value),
+    qty: parseFloat(document.getElementById('f-qty').value) || null,
+    targetPrice: parseFloat(document.getElementById('f-target').value) || null,
+    stopLoss: parseFloat(document.getElementById('f-stop').value) || null,
+    emotions,
+    entryNote: document.getElementById('f-note').value.trim(),
+    chartUrl: document.getElementById('f-chart-url').value.trim() || null,
+    status: 'open',
+    closedAt: null, exitPrice: null, pnl: null, pnlPct: null,
+    disciplineKept: null, exitNote: null,
+  };
+  trades.unshift(trade);
+  saveData(trades);
+  closeEntryModal();
+  toast('エントリーを記録しました！', 'success');
+  updateBadge();
+  showPage('open');
+}
+
+// ==================== CLOSE MODAL ====================
+let closingTrade = null;
+function openCloseModal(id) {
+  closingTrade = trades.find(t => t.id === id);
+  if (!closingTrade) return;
+  document.getElementById('cf-id').value = id;
+  document.getElementById('cm-symbol').textContent =
+    closingTrade.symbol + (closingTrade.symbolName ? ' ' + closingTrade.symbolName : '');
+  const dir = closingTrade.direction === 'buy' ? '▲ 買い' : '▼ 売り';
+  document.getElementById('cm-meta').textContent =
+    `${dir} | エントリー: ¥${fmtNum(closingTrade.entryPrice)}` +
+    (closingTrade.qty ? ` × ${closingTrade.qty}株` : '');
+  document.getElementById('cf-exit').value = '';
+  document.getElementById('cf-discipline').value = '';
+  document.getElementById('cf-note').value = '';
+  document.getElementById('pnl-preview').className = 'pnl-preview';
+  document.getElementById('yn-yes').className = 'yn-btn yes';
+  document.getElementById('yn-no').className = 'yn-btn no';
+  document.getElementById('discipline-error').style.display = 'none';
+  document.getElementById('close-modal').classList.add('open');
+}
+function closeCloseModal() {
+  document.getElementById('close-modal').classList.remove('open');
+  closingTrade = null;
+}
+
+function calcClosePnl() {
+  if (!closingTrade) return;
+  const exit = parseFloat(document.getElementById('cf-exit').value);
+  if (isNaN(exit)) { document.getElementById('pnl-preview').className = 'pnl-preview'; return; }
+  const diff = closingTrade.direction === 'buy' ? exit - closingTrade.entryPrice : closingTrade.entryPrice - exit;
+  const qty = closingTrade.qty || 1;
+  const pnl = diff * qty;
+  const pct = (diff / closingTrade.entryPrice * 100).toFixed(2);
+  const el = document.getElementById('pnl-preview');
+  el.className = 'pnl-preview show ' + (pnl >= 0 ? 'pos' : 'neg');
+  el.textContent = `損益: ${pnl >= 0 ? '+' : ''}¥${fmtNum(Math.round(pnl))}（${pnl >= 0 ? '+' : ''}${pct}%）`;
+}
+
+function setYN(val) {
+  document.getElementById('cf-discipline').value = val ? '1' : '0';
+  document.getElementById('yn-yes').className = 'yn-btn yes' + (val ? ' selected' : '');
+  document.getElementById('yn-no').className = 'yn-btn no' + (!val ? ' selected' : '');
+  document.getElementById('discipline-error').style.display = 'none';
+}
+
+function submitClose(e) {
+  e.preventDefault();
+  const disc = document.getElementById('cf-discipline').value;
+  if (disc === '') {
+    document.getElementById('discipline-error').style.display = 'block';
+    return;
+  }
+  const id = document.getElementById('cf-id').value;
+  const idx = trades.findIndex(t => t.id === id);
+  if (idx < 0) return;
+  const t = trades[idx];
+  const exit = parseFloat(document.getElementById('cf-exit').value);
+  const diff = t.direction === 'buy' ? exit - t.entryPrice : t.entryPrice - exit;
+  const qty = t.qty || 1;
+  trades[idx] = {
+    ...t,
+    status: 'closed',
+    closedAt: new Date().toISOString(),
+    exitPrice: exit,
+    pnl: Math.round(diff * qty * 100) / 100,
+    pnlPct: Math.round(diff / t.entryPrice * 10000) / 100,
+    disciplineKept: disc === '1',
+    exitNote: document.getElementById('cf-note').value.trim(),
+  };
+  saveData(trades);
+  closeCloseModal();
+  toast('決済を記録しました！', 'success');
+  updateBadge();
+  renderOpen();
+}
+
+// ==================== RENDER OPEN ====================
+function renderOpen() {
+  const open = trades.filter(t => t.status === 'open');
+  document.getElementById('open-sub').textContent = `${open.length}件のポジション`;
+  const el = document.getElementById('open-list');
+  if (!open.length) {
+    el.innerHTML = `<div class="empty-state"><div class="icon">🔓</div><p>保有中のポジションはありません</p><small>「新規エントリー」から記録を始めましょう</small></div>`;
+    return;
+  }
+  el.innerHTML = `<div class="trade-list">${open.map(t => tradeCardHTML(t, true)).join('')}</div>`;
+}
+
+// ==================== RENDER HISTORY ====================
+function setHistoryFilter(f, el) {
+  historyFilter = f;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderHistory();
+}
+function renderHistory() {
+  let closed = trades.filter(t => t.status === 'closed');
+  if (historyFilter === 'win') closed = closed.filter(t => t.pnl > 0);
+  else if (historyFilter === 'loss') closed = closed.filter(t => t.pnl <= 0);
+  else if (historyFilter === 'discipline') closed = closed.filter(t => t.disciplineKept === true);
+  document.getElementById('history-sub').textContent = `${closed.length}件の記録`;
+  const el = document.getElementById('history-list');
+  if (!closed.length) {
+    el.innerHTML = `<div class="empty-state"><div class="icon">📜</div><p>条件に合うトレードがありません</p></div>`;
+    return;
+  }
+  el.innerHTML = `<div class="trade-list">${closed.map(t => tradeCardHTML(t, false)).join('')}</div>`;
+}
+
+function tradeCardHTML(t, isOpen) {
+  const dirLabel = t.direction === 'buy' ? '▲' : '▼';
+  const date = new Date(t.createdAt).toLocaleDateString('ja-JP', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  const emotions = t.emotions.map(id => {
+    const em = EMOTIONS[id];
+    return em ? `<div class="trade-emotion-badge" title="${em.label}">${em.emoji}</div>` : '';
+  }).join('');
+
+  let pnlHTML = '';
+  let statusBadge = '';
+  let actionsHTML = '';
+
+  if (isOpen) {
+    statusBadge = `<span class="status-badge status-open">● OPEN</span>`;
+    actionsHTML = `
+      <button class="btn btn-success btn-sm" onclick="openCloseModal('${t.id}')">🏁 決済</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteTrade('${t.id}')">削除</button>
+    `;
+    const tPrice = t.targetPrice ? `利確: ¥${fmtNum(t.targetPrice)}` : '';
+    const sPrice = t.stopLoss ? `損切: ¥${fmtNum(t.stopLoss)}` : '';
+    pnlHTML = `<div style="font-size:12px;color:var(--text-muted)">${[tPrice,sPrice].filter(Boolean).join(' / ')}</div>`;
+  } else {
+    const win = t.pnl > 0;
+    statusBadge = win
+      ? `<span class="status-badge status-win">✅ WIN</span>`
+      : `<span class="status-badge status-loss">❌ LOSS</span>`;
+    const sign = t.pnl >= 0 ? '+' : '';
+    pnlHTML = `<div class="trade-pnl ${t.pnl >= 0 ? 'pnl-pos' : 'pnl-neg'}">${sign}¥${fmtNum(Math.abs(t.pnl))} (${sign}${t.pnlPct}%)</div>`;
+    actionsHTML = `<button class="btn btn-danger btn-sm" onclick="deleteTrade('${t.id}')">削除</button>`;
+    if (t.disciplineKept !== null) {
+      actionsHTML += `<span style="font-size:11px;color:var(--text-muted)">${t.disciplineKept ? '⚖️ 規律あり' : '⚠️ 規律なし'}</span>`;
+    }
+  }
+
+  const priceMain = isOpen
+    ? `<div class="trade-price-val">¥${fmtNum(t.entryPrice)}</div>`
+    : `<div style="font-size:12px;color:var(--text-muted)">In: ¥${fmtNum(t.entryPrice)}</div>
+       <div class="trade-price-val">Out: ¥${fmtNum(t.exitPrice)}</div>`;
+
+  return `
+    <div class="trade-card">
+      <div class="trade-direction ${t.direction}">${dirLabel}</div>
+      <div class="trade-info">
+        <div class="trade-symbol">${t.symbol}${t.symbolName ? ' <span style="font-weight:400;font-size:13px">'+t.symbolName+'</span>' : ''}</div>
+        <div class="trade-meta">${date}${t.qty ? ' · ' + t.qty + '株' : ''}</div>
+        <div class="trade-emotions">${emotions}</div>
+        ${statusBadge}
+        ${t.entryNote ? `<div style="margin-top:6px;font-size:12px;color:var(--text-secondary);background:var(--bg);border-left:3px solid var(--border);padding:4px 8px;border-radius:0 6px 6px 0;max-width:360px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${t.entryNote.replace(/"/g,'&quot;')}">💭 ${t.entryNote}</div>` : ''}
+        ${t.chartUrl ? `<div style="margin-top:4px"><a href="${t.chartUrl.replace(/"/g,'&quot;')}" target="_blank" rel="noopener" style="font-size:12px;color:var(--primary);display:inline-flex;align-items:center;gap:4px;text-decoration:none;padding:3px 8px;background:var(--primary-light);border-radius:6px">📊 チャートを開く</a></div>` : ''}
+        ${t.exitNote ? `<div style="margin-top:4px;font-size:12px;color:var(--text-secondary);background:var(--bg);border-left:3px solid #A7F3D0;padding:4px 8px;border-radius:0 6px 6px 0;max-width:360px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${t.exitNote.replace(/"/g,'&quot;')}">📝 ${t.exitNote}</div>` : ''}
+      </div>
+      <div class="trade-prices">
+        ${priceMain}
+        ${pnlHTML}
+      </div>
+      <div class="trade-actions">${actionsHTML}</div>
+    </div>`;
+}
+
+function deleteTrade(id) {
+  if (!confirm('このトレードを削除しますか？')) return;
+  trades = trades.filter(t => t.id !== id);
+  saveData(trades);
+  updateBadge();
+  renderOpen();
+  renderHistory();
+  toast('削除しました');
+}
+
+// ==================== DASHBOARD ====================
+function renderDashboard() {
+  const closed = trades.filter(t => t.status === 'closed');
+  const total = closed.length;
+  const wins = closed.filter(t => t.pnl > 0).length;
+  const losses = total - wins;
+  const totalPnl = closed.reduce((s, t) => s + (t.pnl || 0), 0);
+  const avgPnl = total ? totalPnl / total : 0;
+  const discipline = closed.filter(t => t.disciplineKept !== null);
+  const keptCount = discipline.filter(t => t.disciplineKept).length;
+  const discPct = discipline.length ? (keptCount / discipline.length * 100) : null;
+
+  // Stats
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-winrate').textContent = total ? (wins/total*100).toFixed(0) + '%' : '—';
+  document.getElementById('stat-winrate').className = 'stat-value ' + (wins/total >= 0.5 ? 'up' : (total ? 'down' : ''));
+  document.getElementById('stat-wl').textContent = `勝 ${wins} / 負 ${losses}`;
+  const pnlEl = document.getElementById('stat-pnl');
+  pnlEl.textContent = (totalPnl >= 0 ? '+' : '') + '¥' + fmtNum(Math.round(totalPnl));
+  pnlEl.className = 'stat-value ' + (totalPnl >= 0 ? 'up' : 'down');
+  document.getElementById('stat-pnl-sub').textContent = `平均損益 ${avgPnl >= 0 ? '+' : ''}¥${fmtNum(Math.round(avgPnl))}`;
+  document.getElementById('stat-discipline').textContent = discPct !== null ? discPct.toFixed(0) + '%' : '—';
+  document.getElementById('stat-discipline').className = 'stat-value' + (discPct !== null ? (discPct >= 60 ? ' up' : ' down') : '');
+  document.getElementById('stat-discipline-sub').textContent = `${keptCount} / ${discipline.length} トレード`;
+
+  // Ring
+  const circ = 2 * Math.PI * 32;
+  const offset = discPct !== null ? circ * (1 - discPct / 100) : circ;
+  document.getElementById('ring-fill-el').setAttribute('stroke-dashoffset', offset.toFixed(1));
+  document.getElementById('ring-fill-el').style.stroke = discPct !== null ? (discPct >= 60 ? '#10B981' : '#EF4444') : '#CBD5E1';
+  document.getElementById('ring-pct-text').textContent = discPct !== null ? discPct.toFixed(0) + '%' : '—';
+  document.getElementById('ring-kept-count').textContent = `${keptCount} / ${discipline.length}`;
+  if (discPct !== null) {
+    document.getElementById('ring-msg').textContent =
+      discPct >= 80 ? '素晴らしい規律です！💪' :
+      discPct >= 60 ? 'まずまずです。改善の余地あり。' :
+      '規律を守ることに意識を向けましょう。';
+  }
+
+  // PnL chart
+  renderPnlChart(closed);
+  renderWinChart(wins, losses);
+  renderEmotionRanking(closed);
+}
+
+function renderPnlChart(closed) {
+  const ctx = document.getElementById('pnlChart').getContext('2d');
+  if (pnlChartInst) pnlChartInst.destroy();
+
+  const capital = loadCapital();
+  // sync input field
+  const inp = document.getElementById('capital-input');
+  if (capital !== null && inp.value === '') inp.value = capital;
+
+  if (!closed.length) {
+    document.getElementById('capital-current-label').textContent = capital ? `現在資産: ¥${fmtNum(capital)}` : '';
+    document.getElementById('capital-return-label').textContent = '';
+    pnlChartInst = new Chart(ctx, {
+      type: 'line', data: { labels: ['開始'], datasets: [{
+        data: [capital || 0], borderColor: '#4F6EF7', pointRadius: 4,
+        tension: 0.3, fill: false,
+      }] },
+      options: { plugins: { legend: { display: false } },
+        scales: { y: { ticks: { callback: v => '¥' + fmtNum(v) } } } }
+    });
+    return;
+  }
+
+  const sorted = [...closed].sort((a, b) => new Date(a.closedAt) - new Date(b.closedAt));
+  const start = capital || 0;
+  let cum = start;
+  // First point = 開始（初期資金）
+  const labels = ['開始', ...sorted.map((t, i) => {
+    const d = new Date(t.closedAt);
+    return `#${i+1} ${d.getMonth()+1}/${d.getDate()}`;
+  })];
+  const data = [start, ...sorted.map(t => { cum += t.pnl; return Math.round(cum); })];
+  const latest = data[data.length - 1];
+  const totalReturn = start > 0 ? ((latest - start) / start * 100) : null;
+  const isUp = latest >= start;
+
+  // label update
+  document.getElementById('capital-current-label').textContent =
+    capital ? `現在資産: ¥${fmtNum(latest)}` : `累計損益: ${latest >= 0 ? '+' : ''}¥${fmtNum(latest)}`;
+  const retEl = document.getElementById('capital-return-label');
+  if (totalReturn !== null) {
+    retEl.textContent = `通算リターン: ${totalReturn >= 0 ? '+' : ''}${totalReturn.toFixed(2)}%`;
+    retEl.style.color = totalReturn >= 0 ? 'var(--success)' : 'var(--danger)';
+  } else {
+    retEl.textContent = '';
+  }
+
+  // gradient fill
+  const grad = ctx.createLinearGradient(0, 0, 0, 240);
+  grad.addColorStop(0, isUp ? 'rgba(16,185,129,0.25)' : 'rgba(239,68,68,0.25)');
+  grad.addColorStop(1, 'rgba(255,255,255,0)');
+
+  // point colors: green if above start, red if below
+  const pointColors = data.map(v => v >= start ? '#10B981' : '#EF4444');
+  const lineColor = isUp ? '#10B981' : '#EF4444';
+
+  pnlChartInst = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: capital ? '資産残高' : '累計損益',
+        data,
+        borderColor: lineColor,
+        backgroundColor: grad,
+        pointBackgroundColor: pointColors,
+        pointBorderColor: pointColors,
+        pointRadius: data.length > 30 ? 2 : 5,
+        pointHoverRadius: 7,
+        borderWidth: 2.5,
+        tension: 0.35,
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: c => {
+              const v = c.parsed.y;
+              const diff = v - start;
+              const sign = diff >= 0 ? '+' : '';
+              const ret = start > 0 ? ` (${sign}${(diff/start*100).toFixed(2)}%)` : '';
+              return `¥${fmtNum(v)}  ${sign}¥${fmtNum(Math.round(diff))}${ret}`;
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          ticks: { callback: v => '¥' + fmtNum(v), maxTicksLimit: 6 },
+          grid: { color: '#F1F5F9' },
+        },
+        x: { grid: { display: false }, ticks: { maxTicksLimit: 8, maxRotation: 0 } }
+      }
+    }
+  });
+}
+
+function renderWinChart(wins, losses) {
+  const ctx = document.getElementById('winChart').getContext('2d');
+  if (winChartInst) winChartInst.destroy();
+  if (!wins && !losses) {
+    winChartInst = new Chart(ctx, { type: 'doughnut', data: { labels: [], datasets: [] } });
+    return;
+  }
+  winChartInst = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['勝ち', '負け'],
+      datasets: [{
+        data: [wins, losses],
+        backgroundColor: ['#10B981', '#EF4444'],
+        borderWidth: 0,
+        hoverOffset: 8,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '68%',
+      plugins: {
+        legend: { position: 'bottom', labels: { padding: 16, font: { size: 13 } } },
+        tooltip: { callbacks: {
+          label: ctx => `${ctx.label}: ${ctx.parsed}件 (${(ctx.parsed/(wins+losses)*100).toFixed(0)}%)`
+        }}
+      }
+    }
+  });
+}
+
+function renderEmotionRanking(closed) {
+  const stats = {};
+  for (const t of closed) {
+    for (const em of t.emotions) {
+      if (!stats[em]) stats[em] = { wins: 0, total: 0, pnl: 0 };
+      stats[em].total++;
+      if (t.pnl > 0) stats[em].wins++;
+      stats[em].pnl += t.pnl;
+    }
+  }
+  const ranked = Object.entries(stats)
+    .map(([id, s]) => ({ id, ...s, wr: s.wins / s.total }))
+    .sort((a, b) => b.wr - a.wr);
+
+  const el = document.getElementById('emotion-ranking');
+  if (!ranked.length) {
+    el.innerHTML = `<div class="empty-state" style="padding:30px 0"><div class="icon">😶</div><p>まだデータがありません</p></div>`;
+  } else {
+    el.innerHTML = ranked.map((r, i) => {
+      const em = EMOTIONS[r.id] || { emoji: '?', label: r.id, color: '#CBD5E1' };
+      const pct = (r.wr * 100).toFixed(0);
+      return `<div class="emotion-rank-item">
+        <div style="color:var(--text-muted);font-size:13px;font-weight:700;min-width:20px">${i+1}</div>
+        <div class="emotion-badge">${em.emoji}</div>
+        <div class="emotion-rank-info">
+          <div class="emotion-rank-name">${em.label}</div>
+          <div class="emotion-rank-detail">${r.total}回エントリー · 勝${r.wins}/負${r.total-r.wins}</div>
+          <div class="emotion-win-bar"><div class="emotion-win-fill" style="width:${pct}%;background:${em.color}"></div></div>
+        </div>
+        <div class="emotion-rank-pct" style="color:${r.wr>=0.5?'var(--success)':'var(--danger)'}">${pct}%</div>
+      </div>`;
+    }).join('');
+  }
+
+  // PnL ranking
+  const pnlRanked = Object.entries(stats)
+    .map(([id, s]) => ({ id, avgPnl: s.pnl / s.total }))
+    .sort((a, b) => b.avgPnl - a.avgPnl);
+  const pnlEl = document.getElementById('emotion-pnl-ranking');
+  if (!pnlRanked.length) {
+    pnlEl.innerHTML = `<div style="font-size:13px;color:var(--text-muted)">データなし</div>`;
+  } else {
+    pnlEl.innerHTML = pnlRanked.map(r => {
+      const em = EMOTIONS[r.id] || { emoji: '?', label: r.id };
+      const sign = r.avgPnl >= 0 ? '+' : '';
+      return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:16px">${em.emoji}</span>
+        <span style="font-size:13px;flex:1">${em.label}</span>
+        <span style="font-size:13px;font-weight:700;color:${r.avgPnl>=0?'var(--success)':'var(--danger)'}">${sign}¥${fmtNum(Math.round(Math.abs(r.avgPnl)))}</span>
+      </div>`;
+    }).join('');
+  }
+}
+
+// ==================== BADGE ====================
+function updateBadge() {
+  const open = trades.filter(t => t.status === 'open').length;
+  const badge = document.getElementById('open-count-badge');
+  if (open > 0) { badge.textContent = open; badge.style.display = 'inline'; }
+  else { badge.style.display = 'none'; }
+}
+
+// ==================== EXPORT ====================
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(trades, null, 2)], { type: 'application/json' });
+  dl(blob, 'trade-emotion-journal.json');
+  toast('JSONでエクスポートしました');
+}
+function exportCSV() {
+  const cols = ['id','createdAt','symbol','symbolName','direction','entryPrice','qty','targetPrice','stopLoss','emotions','entryNote','chartUrl','status','closedAt','exitPrice','pnl','pnlPct','disciplineKept','exitNote'];
+  const rows = trades.map(t => cols.map(c => {
+    const v = c === 'emotions' ? (t[c] || []).join('|') : (t[c] ?? '');
+    return '"' + String(v).replace(/"/g,'""') + '"';
+  }).join(','));
+  const csv = [cols.join(','), ...rows].join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+  dl(blob, 'trade-emotion-journal.csv');
+  toast('CSVでエクスポートしました');
+}
+function dl(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// ==================== UTILS ====================
+function fmtNum(n) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  return Number(n).toLocaleString('ja-JP');
+}
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (type ? ' ' + type : '');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.className = 'toast', 2800);
+}
+
+// ==================== INIT ====================
+(function initCapitalInput() {
+  const v = loadCapital();
+  if (v !== null) document.getElementById('capital-input').value = v;
+})();
+updateBadge();
+renderDashboard();
+</script>
+</body>
+</html>
