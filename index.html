@@ -387,6 +387,67 @@
     color: var(--primary);
   }
 
+  /* ====== REASON TAGS / IMPORT / UNTAGGED ====== */
+  .trade-reasons { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+  .reason-chip {
+    font-size: 11px; padding: 2px 8px; border-radius: 10px;
+    background: var(--primary-light); color: var(--primary); font-weight: 600;
+  }
+  .status-untagged { background: var(--warning-light); color: #B45309; }
+  .carry-hint {
+    display: none; align-items: center; gap: 8px; flex-wrap: wrap;
+    font-size: 12px; color: var(--text-secondary);
+    background: var(--primary-light); border-radius: 8px;
+    padding: 6px 10px; margin: -8px 0 14px;
+  }
+  .carry-hint.show { display: flex; }
+  .carry-hint button {
+    border: none; background: white; color: var(--primary);
+    font-size: 11px; font-weight: 600; padding: 3px 10px;
+    border-radius: 6px; cursor: pointer;
+  }
+  .import-drop {
+    border: 2px dashed var(--border); border-radius: 14px;
+    padding: 36px 20px; text-align: center; color: var(--text-secondary);
+    cursor: pointer; transition: all 0.15s; background: var(--bg);
+  }
+  .import-drop.over, .import-drop:hover { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+  .import-drop .big { font-size: 32px; margin-bottom: 8px; }
+  .map-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; }
+  @media (max-width: 700px) { .map-grid { grid-template-columns: 1fr; } }
+  .map-row { display: flex; flex-direction: column; gap: 4px; }
+  .map-row label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+  .map-row select {
+    padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 8px;
+    font-size: 13px; background: white; color: var(--text-primary); font-family: inherit;
+  }
+  .map-row select.missing { border-color: var(--danger); }
+  .import-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin: 16px 0; }
+  .import-stat { background: var(--bg); border-radius: 10px; padding: 10px 8px; text-align: center; }
+  .import-stat .v { font-size: 20px; font-weight: 700; }
+  .import-stat .l { font-size: 11px; color: var(--text-muted); font-weight: 600; margin-top: 2px; }
+  .import-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .import-table th, .import-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; }
+  .import-table th { color: var(--text-muted); font-weight: 600; font-size: 11px; }
+  .import-table-wrap { overflow-x: auto; max-height: 260px; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; }
+  .import-skips { font-size: 12px; color: var(--text-secondary); background: var(--warning-light); border-radius: 8px; padding: 8px 12px; margin-top: 8px; max-height: 120px; overflow-y: auto; }
+  .untag-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 16px 20px; margin-bottom: 12px;
+  }
+  .untag-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .untag-head .sym { font-weight: 700; font-size: 15px; }
+  .untag-head .meta { font-size: 12px; color: var(--text-muted); }
+  .untag-head .pnl { margin-left: auto; font-weight: 700; font-size: 14px; }
+  .untag-label {
+    font-size: 11px; font-weight: 700; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: .06em; margin: 12px 0 6px;
+  }
+  .untag-card .emotion-tag { padding: 6px 12px; font-size: 12px; }
+  .untag-foot { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+  .untag-foot .form-input { flex: 1; min-width: 160px; padding: 8px 12px; font-size: 13px; }
+  .yn-btn.sm { flex: 0 0 auto; padding: 6px 12px; font-size: 12px; border-radius: 8px; }
+
   /* ====== EMPTY STATE ====== */
   .empty-state {
     text-align: center; padding: 60px 20px;
@@ -625,8 +686,10 @@
     <button class="nav-tab" onclick="showPage('open')" id="tab-open">🔓 保有中 <span id="open-count-badge" style="background:var(--primary);color:white;border-radius:10px;padding:1px 6px;font-size:11px;display:none"></span></button>
     <button class="nav-tab" onclick="showPage('history')" id="tab-history">📜 履歴</button>
     <button class="nav-tab" onclick="showPage('calendar')" id="tab-calendar">📅 カレンダー</button>
+    <button class="nav-tab" onclick="showPage('untagged')" id="tab-untagged">🏷 未タグ <span id="untagged-badge" style="background:var(--warning);color:white;border-radius:10px;padding:1px 6px;font-size:11px;display:none"></span></button>
   </div>
   <div class="nav-actions">
+    <button class="btn btn-secondary" style="padding:10px 16px" onclick="openImportModal()" title="GMOクリック証券の約定履歴CSVを取り込む">⬆ CSV取込</button>
     <button class="btn-new" onclick="openEntryModal()">＋ 新規エントリー</button>
   </div>
 </nav>
@@ -644,6 +707,7 @@
       <div class="export-bar">
         <button class="btn btn-secondary btn-sm" onclick="exportJSON()">⬇ JSON</button>
         <button class="btn btn-secondary btn-sm" onclick="exportCSV()">⬇ CSV</button>
+        <button class="btn btn-primary btn-sm" onclick="openImportModal()">⬆ CSV取込</button>
       </div>
     </div>
 
@@ -761,6 +825,7 @@
       <div class="export-bar">
         <button class="btn btn-secondary btn-sm" onclick="exportJSON()">⬇ JSON</button>
         <button class="btn btn-secondary btn-sm" onclick="exportCSV()">⬇ CSV</button>
+        <button class="btn btn-primary btn-sm" onclick="openImportModal()">⬆ CSV取込</button>
       </div>
     </div>
     <div class="filter-bar">
@@ -775,6 +840,20 @@
         <p>まだ決済済みのトレードがありません</p>
       </div>
     </div>
+  </div>
+
+  <!-- ========== UNTAGGED PAGE ========== -->
+  <div class="page" id="page-untagged">
+    <div class="page-header">
+      <div>
+        <div class="page-title">🏷 まとめてタグ付け</div>
+        <div class="page-subtitle" id="untagged-sub">CSVで取り込んだトレードに感情・根拠を後付けします</div>
+      </div>
+      <div class="export-bar">
+        <button class="btn btn-secondary btn-sm" onclick="openImportModal()">⬆ CSV取込</button>
+      </div>
+    </div>
+    <div id="untagged-list"></div>
   </div>
 
   <!-- ========== CALENDAR PAGE ========== -->
@@ -865,6 +944,10 @@
     </div>
     <form id="entry-form" onsubmit="submitEntry(event)">
       <div class="section-title">基本情報</div>
+      <div class="carry-hint" id="carry-hint">
+        <span id="carry-hint-text">↩ 前回の銘柄・数量を引き継ぎました</span>
+        <button type="button" onclick="clearCarry()">クリア</button>
+      </div>
       <div class="form-grid">
         <div class="form-group">
           <label class="form-label">銘柄コード <span class="required">*</span></label>
@@ -912,10 +995,12 @@
       </div>
       <div id="emotion-error" style="color:var(--danger);font-size:12px;margin-top:6px;display:none">感情タグを1つ以上選択してください</div>
 
-      <div class="section-title" style="margin-top:20px">エントリー根拠</div>
-      <div class="form-group">
-        <label class="form-label">なぜ買った（売った）のか？ <span class="required">*</span></label>
-        <textarea class="form-textarea" id="f-note" placeholder="例: 5日線が20日線を上抜けたゴールデンクロスを確認。出来高も増加しており上昇トレンド転換の可能性。" required></textarea>
+      <div class="section-title" style="margin-top:20px">エントリー根拠 <span style="color:var(--text-muted);font-size:11px;font-weight:400">タグを選ぶかテキストを書く（どちらか1つ以上）</span></div>
+      <div class="emotion-tags" id="entry-reason-tags"></div>
+      <div id="reason-error" style="color:var(--danger);font-size:12px;margin-top:6px;display:none">根拠タグを1つ以上選ぶか、テキストを入力してください</div>
+      <div class="form-group" style="margin-top:14px">
+        <label class="form-label">補足メモ <span style="color:var(--text-muted);font-weight:400">（任意）</span></label>
+        <textarea class="form-textarea" id="f-note" placeholder="例: 5日線が20日線を上抜け。出来高も増加。" style="min-height:56px"></textarea>
       </div>
       <div class="form-group" style="margin-top:12px">
         <label class="form-label">チャートURL <span style="color:var(--text-muted);font-weight:400">（任意）</span></label>
@@ -1098,6 +1183,56 @@
   </div>
 </div>
 
+<!-- ========== IMPORT MODAL ========== -->
+<div class="modal-overlay" id="import-modal">
+  <div class="modal" style="max-width:720px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">⬆ 約定履歴CSVの取り込み</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-top:2px">GMOクリック証券の取引履歴（約定）CSVに対応。他社CSVも列を指定すれば取り込めます。</div>
+      </div>
+      <button class="modal-close" onclick="closeImportModal()">✕</button>
+    </div>
+
+    <div id="import-step1">
+      <div class="import-drop" id="import-drop" onclick="document.getElementById('import-file').click()">
+        <div class="big">📂</div>
+        <div style="font-weight:600">ここにCSVをドラッグ&ドロップ、またはクリックして選択</div>
+        <div style="font-size:12px;margin-top:6px">Shift_JIS / UTF-8 どちらでもOK</div>
+      </div>
+      <input type="file" id="import-file" accept=".csv,.txt,text/csv,text/plain" style="display:none">
+      <div style="font-size:12px;color:var(--text-muted);margin-top:14px;line-height:1.7">
+        <b>取り込みの仕組み</b><br>
+        ・買い/売り（新規/返済）の約定を銘柄ごとに突き合わせて1トレードにまとめます<br>
+        ・決済されていない建玉は「保有中」として登録されます<br>
+        ・同じCSVを再度取り込んでも重複しません<br>
+        ・取り込み後、「未タグ」タブで感情・根拠をまとめて付けられます
+      </div>
+    </div>
+
+    <div id="import-step2" style="display:none">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;font-size:13px">
+        <span id="import-filename" style="font-weight:600"></span>
+        <span id="import-fileinfo" style="color:var(--text-muted)"></span>
+        <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="importReset()">別のファイル</button>
+      </div>
+      <div class="section-title">列の割り当て <span style="color:var(--text-muted);font-size:11px;font-weight:400">自動判定。違っていたら直してください</span></div>
+      <div class="map-grid" id="import-map"></div>
+      <div class="section-title" style="margin-top:20px">取り込み結果のプレビュー</div>
+      <div class="import-summary" id="import-summary"></div>
+      <div class="import-table-wrap"><table class="import-table" id="import-preview"></table></div>
+      <div class="import-skips" id="import-skips" style="display:none"></div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-top:16px;cursor:pointer">
+        <input type="checkbox" id="import-goto-untagged" checked> 取り込み後に「未タグ」タブを開く
+      </label>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeImportModal()">キャンセル</button>
+        <button type="button" class="btn btn-primary" id="import-commit-btn" onclick="importCommit()">⬆ 取り込む</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ========== TRADE DETAIL MODAL ========== -->
 <div class="modal-overlay" id="trade-detail-modal" onclick="closeTradeDetailModal(event)">
   <div class="modal" style="max-width:560px">
@@ -1128,6 +1263,43 @@ const EMOTIONS = {
   calm:      { label: '冷静・分析的', emoji: '🧠', color: '#4F6EF7' },
   greed:     { label: '欲望・強欲', emoji: '🤑', color: '#F59E0B' },
 };
+
+const REASONS = {
+  breakout:  { label: 'ブレイクアウト', emoji: '📈' },
+  pullback:  { label: '押し目・戻り', emoji: '🔄' },
+  trend:     { label: 'トレンドフォロー', emoji: '🌊' },
+  reversal:  { label: '逆張り', emoji: '↩️' },
+  indicator: { label: 'テクニカル指標', emoji: '📐' },
+  volume:    { label: '出来高急増', emoji: '📊' },
+  news:      { label: 'ニュース・材料', emoji: '📰' },
+  gut:       { label: 'なんとなく・勘', emoji: '🎲' },
+};
+function reasonChipsHTML(prefix) {
+  return Object.entries(REASONS).map(([id, r]) =>
+    `<button type="button" class="emotion-tag" data-id="${id}" onclick="toggleReason(this)">${r.emoji} ${r.label}</button>`
+  ).join('');
+}
+function emotionChipsHTML() {
+  return Object.entries(EMOTIONS).map(([id, e]) =>
+    `<button type="button" class="emotion-tag" data-id="${id}" onclick="toggleEmotion(this)">${e.emoji} ${e.label}</button>`
+  ).join('');
+}
+function toggleReason(el) { el.classList.toggle('selected'); }
+function getSelectedReasons(container) {
+  return [...container.querySelectorAll('.emotion-tag.selected')].map(t => t.dataset.id);
+}
+function getSelectedEmotionsIn(container) {
+  return [...container.querySelectorAll('.emotion-tag')].filter(t => t.className !== 'emotion-tag').map(t => t.dataset.id);
+}
+function reasonBadgesHTML(t) {
+  return (t.reasons || []).map(id => {
+    const r = REASONS[id];
+    return r ? `<span class="reason-chip">${r.emoji} ${r.label}</span>` : '';
+  }).join('');
+}
+function isUntagged(t) {
+  return t.tagged !== true && (!t.emotions || !t.emotions.length);
+}
 
 function loadData() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
@@ -1164,6 +1336,7 @@ function showPage(name) {
   if (name === 'open') renderOpen();
   if (name === 'history') renderHistory();
   if (name === 'calendar') renderCalendar();
+  if (name === 'untagged') renderUntagged();
 }
 
 // ==================== ENTRY MODAL ====================
@@ -1174,7 +1347,29 @@ function openEntryModal() {
   });
   setDirection('buy');
   document.getElementById('emotion-error').style.display = 'none';
+  document.getElementById('reason-error').style.display = 'none';
+  document.querySelectorAll('#entry-reason-tags .emotion-tag').forEach(t => t.classList.remove('selected'));
+  applyCarry();
   document.getElementById('entry-modal').classList.add('open');
+}
+// 直前トレードの銘柄・数量を初期値として引き継ぐ
+function applyCarry() {
+  const hint = document.getElementById('carry-hint');
+  hint.classList.remove('show');
+  if (!trades.length) return;
+  const last = [...trades].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+  if (!last || !last.symbol) return;
+  document.getElementById('f-symbol').value = last.symbol;
+  document.getElementById('f-name').value = last.symbolName || '';
+  if (last.qty) document.getElementById('f-qty').value = last.qty;
+  document.getElementById('carry-hint-text').textContent =
+    `↩ 前回の ${last.symbol}${last.symbolName ? ' ' + last.symbolName : ''}${last.qty ? ' × ' + last.qty + '株' : ''} を引き継ぎました`;
+  hint.classList.add('show');
+}
+function clearCarry() {
+  ['f-symbol', 'f-name', 'f-qty'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('carry-hint').classList.remove('show');
+  document.getElementById('f-symbol').focus();
 }
 function closeEntryModal() {
   document.getElementById('entry-modal').classList.remove('open');
@@ -1211,6 +1406,13 @@ function submitEntry(e) {
     return;
   }
   document.getElementById('emotion-error').style.display = 'none';
+  const reasons = getSelectedReasons(document.getElementById('entry-reason-tags'));
+  const noteVal = document.getElementById('f-note').value.trim();
+  if (!reasons.length && !noteVal) {
+    document.getElementById('reason-error').style.display = 'block';
+    return;
+  }
+  document.getElementById('reason-error').style.display = 'none';
 
   const trade = {
     id: genId(),
@@ -1223,7 +1425,8 @@ function submitEntry(e) {
     targetPrice: parseFloat(document.getElementById('f-target').value) || null,
     stopLoss: parseFloat(document.getElementById('f-stop').value) || null,
     emotions,
-    entryNote: document.getElementById('f-note').value.trim(),
+    reasons,
+    entryNote: noteVal,
     chartUrl: document.getElementById('f-chart-url').value.trim() || null,
     status: 'open',
     closedAt: null, exitPrice: null, pnl: null, pnlPct: null,
@@ -1350,10 +1553,12 @@ function renderHistory() {
 function tradeCardHTML(t, isOpen) {
   const dirLabel = t.direction === 'buy' ? '▲' : '▼';
   const date = new Date(t.createdAt).toLocaleDateString('ja-JP', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
-  const emotions = t.emotions.map(id => {
+  const emotions = (t.emotions || []).map(id => {
     const em = EMOTIONS[id];
     return em ? `<div class="trade-emotion-badge" title="${em.label}">${em.emoji}</div>` : '';
   }).join('');
+  const reasonsHTML = reasonBadgesHTML(t);
+  const untaggedBadge = isUntagged(t) ? `<span class="status-badge status-untagged" style="margin-left:6px">🏷 未タグ</span>` : '';
 
   let pnlHTML = '';
   let statusBadge = '';
@@ -1394,7 +1599,8 @@ function tradeCardHTML(t, isOpen) {
         <div class="trade-symbol">${t.symbol}${t.symbolName ? ' <span style="font-weight:400;font-size:13px">'+t.symbolName+'</span>' : ''}</div>
         <div class="trade-meta">${date}${t.qty ? ' · ' + t.qty + '株' : ''}</div>
         <div class="trade-emotions">${emotions}</div>
-        ${statusBadge}
+        ${reasonsHTML ? `<div class="trade-reasons">${reasonsHTML}</div>` : ''}
+        ${statusBadge}${untaggedBadge}
         ${t.entryNote ? `<div style="margin-top:6px;font-size:12px;color:var(--text-secondary);background:var(--bg);border-left:3px solid var(--border);padding:4px 8px;border-radius:0 6px 6px 0;max-width:360px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">💭 ${t.entryNote.replace(/</g,'&lt;')}</div>` : ''}
         ${t.exitNote ? `<div style="margin-top:4px;font-size:12px;color:var(--text-secondary);background:var(--bg);border-left:3px solid #A7F3D0;padding:4px 8px;border-radius:0 6px 6px 0;max-width:360px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📝 ${t.exitNote.replace(/</g,'&lt;')}</div>` : ''}
         ${hasNotes ? `<div style="margin-top:6px;font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:3px">🔍 クリックで全文を表示</div>` : ''}
@@ -1654,6 +1860,10 @@ function updateBadge() {
   const badge = document.getElementById('open-count-badge');
   if (open > 0) { badge.textContent = open; badge.style.display = 'inline'; }
   else { badge.style.display = 'none'; }
+  const un = trades.filter(isUntagged).length;
+  const ub = document.getElementById('untagged-badge');
+  if (un > 0) { ub.textContent = un; ub.style.display = 'inline'; }
+  else { ub.style.display = 'none'; }
 }
 
 // ==================== EXPORT ====================
@@ -1663,9 +1873,9 @@ function exportJSON() {
   toast('JSONでエクスポートしました');
 }
 function exportCSV() {
-  const cols = ['id','createdAt','symbol','symbolName','direction','entryPrice','qty','targetPrice','stopLoss','emotions','entryNote','chartUrl','status','closedAt','exitPrice','pnl','pnlPct','disciplineKept','exitNote'];
+  const cols = ['id','createdAt','symbol','symbolName','direction','entryPrice','qty','targetPrice','stopLoss','emotions','reasons','entryNote','chartUrl','status','closedAt','exitPrice','pnl','pnlPct','disciplineKept','exitNote','source'];
   const rows = trades.map(t => cols.map(c => {
-    const v = c === 'emotions' ? (t[c] || []).join('|') : (t[c] ?? '');
+    const v = (c === 'emotions' || c === 'reasons') ? (t[c] || []).join('|') : (t[c] ?? '');
     return '"' + String(v).replace(/"/g,'""') + '"';
   }).join(','));
   const csv = [cols.join(','), ...rows].join('\n');
@@ -2102,7 +2312,7 @@ function openTradeDetail(id) {
   const closedDate = t.closedAt ? new Date(t.closedAt).toLocaleDateString('ja-JP', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : null;
   const dirLabel = t.direction === 'buy' ? '▲ 買い' : '▼ 売り';
   const dirColor = t.direction === 'buy' ? 'var(--success)' : 'var(--danger)';
-  const emotions = t.emotions.map(id => {
+  const emotions = (t.emotions || []).map(id => {
     const em = EMOTIONS[id];
     return em ? `<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border:1px solid var(--border);border-radius:20px;font-size:13px;background:var(--bg)">${em.emoji} ${em.label}</span>` : '';
   }).join('');
@@ -2129,6 +2339,15 @@ function openTradeDetail(id) {
   // 感情
   if (emotions) {
     body += `<div style="margin-bottom:20px"><div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">エントリー時の感情</div><div style="display:flex;flex-wrap:wrap;gap:6px">${emotions}</div></div>`;
+  }
+
+  // 根拠タグ
+  const reasonsHTML = reasonBadgesHTML(t);
+  if (reasonsHTML) {
+    body += `<div style="margin-bottom:16px"><div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">🏷 エントリー根拠（タグ）</div><div style="display:flex;flex-wrap:wrap;gap:6px">${reasonsHTML}</div></div>`;
+  }
+  if (isUntagged(t)) {
+    body += `<div style="margin-bottom:16px"><button class="btn btn-secondary btn-sm" onclick="document.getElementById('trade-detail-modal').classList.remove('open');showPage('untagged')">🏷 未タグ → まとめてタグ付けで記録する</button></div>`;
   }
 
   // エントリー根拠
@@ -2165,11 +2384,427 @@ function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+
+// ==================== CSV IMPORT (GMOクリック証券 約定履歴) ====================
+const IMPORT_FIELDS = [
+  { key: 'date',   label: '約定日 *',        keys: ['約定日時','約定日','取引日','売買日','注文日','日付','日時'] },
+  { key: 'time',   label: '約定時刻',        keys: ['約定時刻','約定時間','時刻','時間'], optional: true },
+  { key: 'symbol', label: '銘柄コード *',    keys: ['銘柄コード','証券コード','コード'] },
+  { key: 'name',   label: '銘柄名',          keys: ['銘柄名','銘柄'], optional: true },
+  { key: 'side',   label: '売買 / 取引区分 *', keys: ['売買区分','取引区分','売買','取引','区分'] },
+  { key: 'qty',    label: '約定数量 *',      keys: ['約定数量','約定株数','数量','株数'] },
+  { key: 'price',  label: '約定単価 *',      keys: ['約定単価','約定価格','単価','価格'] },
+  { key: 'pnl',    label: '実現損益',        keys: ['実現損益','損益金額','損益'], optional: true },
+];
+let importState = null; // { fileName, headers, rows, mapping, result }
+
+function openImportModal() {
+  importReset();
+  document.getElementById('import-modal').classList.add('open');
+}
+function closeImportModal() {
+  document.getElementById('import-modal').classList.remove('open');
+}
+function importReset() {
+  importState = null;
+  document.getElementById('import-step1').style.display = '';
+  document.getElementById('import-step2').style.display = 'none';
+  document.getElementById('import-file').value = '';
+}
+
+(function initImportDrop() {
+  const drop = document.getElementById('import-drop');
+  const file = document.getElementById('import-file');
+  file.addEventListener('change', () => { if (file.files[0]) importReadFile(file.files[0]); });
+  ['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+  drop.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) importReadFile(f); });
+  // ページ全体へのドロップでも受け付ける（モーダルが開いていれば）
+  document.addEventListener('dragover', e => { if (document.getElementById('import-modal').classList.contains('open')) e.preventDefault(); });
+  document.addEventListener('drop', e => {
+    if (!document.getElementById('import-modal').classList.contains('open')) return;
+    e.preventDefault();
+    const f = e.dataTransfer.files[0]; if (f) importReadFile(f);
+  });
+})();
+
+function importReadFile(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    const buf = reader.result;
+    let text, enc = 'UTF-8';
+    try { text = new TextDecoder('utf-8', { fatal: true }).decode(buf); }
+    catch (e) { text = new TextDecoder('shift_jis').decode(buf); enc = 'Shift_JIS'; }
+    text = text.replace(/^﻿/, '');
+    const table = parseCSV(text);
+    const hIdx = findHeaderRow(table);
+    if (hIdx < 0) { toast('ヘッダー行が見つかりません（銘柄・数量などの列名が必要です）', 'error'); return; }
+    const headers = table[hIdx].map(h => String(h).trim());
+    const rows = table.slice(hIdx + 1).filter(r => r.some(c => String(c).trim() !== '') && r.length >= Math.max(3, headers.length - 2));
+    importState = { fileName: file.name, enc, headers, rows, mapping: autoMap(headers, rows) };
+    document.getElementById('import-filename').textContent = file.name;
+    document.getElementById('import-fileinfo').textContent = `${enc} · ${rows.length}行`;
+    document.getElementById('import-step1').style.display = 'none';
+    document.getElementById('import-step2').style.display = '';
+    renderImportMap();
+    importAnalyze();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// RFC4180風のCSVパーサ（改行を含む引用セル対応、区切りはカンマ/タブを自動判定）
+function parseCSV(text) {
+  const firstLine = text.split(/\r?\n/).find(l => l.trim()) || '';
+  const delim = (firstLine.split('\t').length > firstLine.split(',').length) ? '\t' : ',';
+  const rows = []; let row = []; let cell = ''; let q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"') { if (text[i+1] === '"') { cell += '"'; i++; } else q = false; }
+      else cell += c;
+    } else if (c === '"') q = true;
+    else if (c === delim) { row.push(cell); cell = ''; }
+    else if (c === '\n') { row.push(cell); rows.push(row); row = []; cell = ''; }
+    else if (c === '\r') { /* skip */ }
+    else cell += c;
+  }
+  if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
+  return rows;
+}
+function findHeaderRow(table) {
+  for (let i = 0; i < Math.min(table.length, 30); i++) {
+    const line = table[i].join(' ');
+    const hits = ['銘柄', '数量', '株数', '約定', '単価', '価格', '売買', '取引'].filter(k => line.includes(k)).length;
+    if (hits >= 3) return i;
+  }
+  return -1;
+}
+function autoMap(headers, rows) {
+  const used = new Set();
+  const mapping = {};
+  const colVals = i => rows.slice(0, 50).map(r => String(r[i] ?? '').trim()).filter(Boolean);
+  const share = (i, re) => { const v = colVals(i); return v.length ? v.filter(x => re.test(x)).length / v.length : 0; };
+  // 値ベースの判定を優先する列
+  const bySide = headers.map((h, i) => ({ i, s: share(i, /買|売/) })).filter(x => x.s >= 0.8 && /売買|取引|区分|種別/.test(headers[x.i]))
+    .sort((a, b) => b.s - a.s)[0] || headers.map((h, i) => ({ i, s: share(i, /^(?:現物|信用)?(?:新規|返済)?(?:買|売)/) })).filter(x => x.s >= 0.8).sort((a, b) => b.s - a.s)[0];
+  if (bySide) { mapping.side = bySide.i; used.add(bySide.i); }
+  for (const f of IMPORT_FIELDS) {
+    if (mapping[f.key] !== undefined) continue;
+    let found = -1;
+    outer: for (const k of f.keys) {
+      for (let i = 0; i < headers.length; i++) {
+        if (used.has(i) || !headers[i].includes(k)) continue;
+        if (f.key === 'date' && /受渡|入金|出金/.test(headers[i])) continue;
+        if (f.key === 'symbol' && share(i, /^\d{4}[0-9A-Z]?$/) < 0.5) continue;
+        if ((f.key === 'qty' || f.key === 'price' || f.key === 'pnl') && share(i, /^[-+]?[\d,\.]+/) < 0.5) continue;
+        found = i; break outer;
+      }
+    }
+    if (found >= 0) { mapping[f.key] = found; used.add(found); }
+  }
+  return mapping;
+}
+function renderImportMap() {
+  const { headers, mapping } = importState;
+  const el = document.getElementById('import-map');
+  el.innerHTML = IMPORT_FIELDS.map(f => {
+    const opts = [`<option value="">${f.optional ? '（使わない）' : '（未選択）'}</option>`]
+      .concat(headers.map((h, i) => `<option value="${i}" ${mapping[f.key] === i ? 'selected' : ''}>${escHtml(h || '(空)')}</option>`)).join('');
+    const missing = !f.optional && mapping[f.key] === undefined;
+    return `<div class="map-row"><label>${f.label}</label><select class="${missing ? 'missing' : ''}" onchange="importMapChange('${f.key}', this.value)">${opts}</select></div>`;
+  }).join('');
+}
+function importMapChange(key, val) {
+  if (val === '') delete importState.mapping[key]; else importState.mapping[key] = parseInt(val, 10);
+  renderImportMap();
+  importAnalyze();
+}
+
+function toNum(v) {
+  if (v === undefined || v === null) return NaN;
+  const s = String(v).replace(/[,\s円株口枚"']/g, '').replace(/[０-９．－]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/^\+/, '').replace(/^▲|^△/, '-');
+  if (s === '' || s === '-') return NaN;
+  return parseFloat(s);
+}
+function parseJpDate(dateStr, timeStr, fallbackHour) {
+  let s = String(dateStr || '').trim().replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+  let m = s.match(/(\d{4})[\/\-\.年](\d{1,2})[\/\-\.月](\d{1,2})/);
+  if (!m) { m = s.match(/^(\d{4})(\d{2})(\d{2})/); }
+  if (!m) return null;
+  let hh = fallbackHour, mm = 0, ss = 0;
+  const tsrc = (timeStr && String(timeStr).trim()) || s.slice(m.index + m[0].length);
+  const t = String(tsrc).match(/(\d{1,2})[:時](\d{1,2})(?:[:分](\d{1,2}))?/);
+  if (t) { hh = +t[1]; mm = +t[2]; ss = +(t[3] || 0); }
+  const d = new Date(+m[1], +m[2] - 1, +m[3], hh, mm, ss);
+  return isNaN(d.getTime()) ? null : d;
+}
+function parseSide(v) {
+  const s = String(v || '');
+  const side = s.includes('買') ? 'buy' : s.includes('売') ? 'sell' : null;
+  let leg = null;
+  if (/返済|決済|手仕舞|返却/.test(s)) leg = 'close';
+  else if (/新規|建$|建て|建玉/.test(s)) leg = 'open';
+  return { side, leg };
+}
+
+// 約定行 → トレードへ変換（銘柄ごとにFIFOで新規と返済を突き合わせ）
+function importAnalyze() {
+  const st = importState; if (!st) return;
+  const m = st.mapping;
+  const required = ['date', 'symbol', 'side', 'qty', 'price'];
+  const missing = required.filter(k => m[k] === undefined);
+  const summaryEl = document.getElementById('import-summary');
+  const prevEl = document.getElementById('import-preview');
+  const skipsEl = document.getElementById('import-skips');
+  const btn = document.getElementById('import-commit-btn');
+  if (missing.length) {
+    summaryEl.innerHTML = `<div style="grid-column:1/-1;color:var(--danger);font-size:13px">必須の列が未選択です: ${missing.map(k => IMPORT_FIELDS.find(f => f.key === k).label.replace(' *','')).join('、')}</div>`;
+    prevEl.innerHTML = ''; skipsEl.style.display = 'none'; btn.disabled = true; btn.style.opacity = .5;
+    st.result = null; return;
+  }
+  btn.disabled = false; btn.style.opacity = 1;
+
+  // 1) 約定行を正規化
+  const execs = []; const skips = [];
+  st.rows.forEach((r, idx) => {
+    const get = k => m[k] === undefined ? '' : r[m[k]];
+    const { side, leg } = parseSide(get('side'));
+    const qty = toNum(get('qty')); const price = toNum(get('price'));
+    const symbol = String(get('symbol') || '').trim().replace(/\.T$/i, '');
+    const dt = parseJpDate(get('date'), get('time'), 12);
+    if (!side) { skips.push(`${idx+1}行目: 売買が判別できません（${get('side')}）`); return; }
+    if (!symbol) { skips.push(`${idx+1}行目: 銘柄コードが空`); return; }
+    if (!dt) { skips.push(`${idx+1}行目: 日付が読めません（${get('date')}）`); return; }
+    if (!(qty > 0) || !(price > 0)) { skips.push(`${idx+1}行目: 数量/単価が不正（${get('qty')} / ${get('price')}）`); return; }
+    const pnl = m.pnl === undefined ? NaN : toNum(get('pnl'));
+    execs.push({ idx, dt, symbol, name: String(get('name') || '').trim(), side, leg, qty, price, pnl });
+  });
+  execs.sort((a, b) => a.dt - b.dt || a.idx - b.idx);
+
+  // 2) 既存の保有中ポジションを建玉としてシード
+  const lots = {}; // symbol -> [{direction, qty, price, dt, tradeId, key}]
+  const pushLot = (sym, lot) => { (lots[sym] = lots[sym] || []).push(lot); };
+  trades.filter(t => t.status === 'open' && t.entryPrice > 0).forEach(t => {
+    pushLot(t.symbol, { direction: t.direction, qty: t.qty || 0, price: t.entryPrice, dt: new Date(t.createdAt), tradeId: t.id, key: t.importKey || null, name: t.symbolName });
+  });
+  const existingKeys = new Set(trades.map(t => t.importKey).filter(Boolean));
+
+  const newTrades = []; const closeExisting = []; let dupes = 0;
+  const openKey = e => `open|${e.symbol}|${e.dt.toISOString()}|${e.price}|${e.qty}|${e.side}`;
+  const closeKey = (e, dir) => `close|${e.symbol}|${e.dt.toISOString()}|${e.price}|${e.qty}|${dir}`;
+
+  const openLot = e => {
+    const key = openKey(e);
+    if (existingKeys.has(key)) { dupes++; return; }
+    const lot = { direction: e.side, qty: e.qty, price: e.price, dt: e.dt, tradeId: null, key, name: e.name };
+    pushLot(e.symbol, lot);
+    newTrades.push(lot._trade = {
+      id: genId(), createdAt: e.dt.toISOString(), symbol: e.symbol, symbolName: e.name, direction: e.side,
+      entryPrice: e.price, qty: e.qty, targetPrice: null, stopLoss: null, emotions: [], reasons: [], entryNote: '', chartUrl: null,
+      status: 'open', closedAt: null, exitPrice: null, pnl: null, pnlPct: null, disciplineKept: null, exitNote: '',
+      source: 'csv', importKey: key,
+    });
+  };
+  const closeAgainst = (e, dir) => {
+    const ck = closeKey(e, dir);
+    if (existingKeys.has(ck)) {
+      // 既に取り込み済みの決済。今回のCSVで再生成された新規建玉だけ消費して二重登録を防ぐ
+      dupes++;
+      let remain = e.qty;
+      for (const lot of (lots[e.symbol] || []).filter(l => l.direction === dir && l.qty > 0 && l._trade)) {
+        if (remain <= 0) break;
+        const take = Math.min(lot.qty, remain); lot.qty -= take; remain -= take;
+        lot._trade.qty = lot.qty; if (lot.qty === 0) { const i = newTrades.indexOf(lot._trade); if (i >= 0) newTrades.splice(i, 1); }
+      }
+      return true;
+    }
+    const q = (lots[e.symbol] || []).filter(l => l.direction === dir && l.qty > 0);
+    if (!q.length) return false;
+    let remain = e.qty; let cost = 0; let filled = 0; let firstDt = null;
+    for (const lot of q) {
+      if (remain <= 0) break;
+      const take = Math.min(lot.qty, remain);
+      lot.qty -= take; remain -= take; cost += take * lot.price; filled += take;
+      if (!firstDt) firstDt = lot.dt;
+      if (lot.tradeId && lot.qty === 0) {
+        // 既存の保有中トレードをそのまま決済扱いに
+        const diff = dir === 'buy' ? e.price - lot.price : lot.price - e.price;
+        closeExisting.push({ id: lot.tradeId, closedAt: e.dt.toISOString(), exitPrice: e.price, qty: take, pnl: Math.round(diff * take * 100) / 100, pnlPct: Math.round(diff / lot.price * 10000) / 100, importKey: ck, name: e.name });
+        cost -= take * lot.price; filled -= take; if (firstDt === lot.dt) firstDt = null;
+      } else if (lot._trade) {
+        // 今回取り込んだ新規建てを消費 → 建玉トレードは数量を減らす（0なら削除）
+        lot._trade.qty = lot.qty; if (lot.qty === 0) { const i = newTrades.indexOf(lot._trade); if (i >= 0) newTrades.splice(i, 1); }
+      } else if (lot.tradeId) {
+        // 既存トレードの一部だけ決済：既存はそのまま残し、決済分を新規トレードとして起票
+      }
+    }
+    if (filled > 0) {
+      const avg = cost / filled;
+      const diff = dir === 'buy' ? e.price - avg : avg - e.price;
+      newTrades.push({
+        id: genId(), createdAt: (firstDt || e.dt).toISOString(), symbol: e.symbol, symbolName: e.name, direction: dir,
+        entryPrice: Math.round(avg * 100) / 100, qty: filled, targetPrice: null, stopLoss: null, emotions: [], reasons: [], entryNote: '', chartUrl: null,
+        status: 'closed', closedAt: e.dt.toISOString(), exitPrice: e.price,
+        pnl: Math.round(diff * filled * 100) / 100, pnlPct: Math.round(diff / avg * 10000) / 100,
+        disciplineKept: null, exitNote: '', source: 'csv', importKey: ck,
+      });
+    }
+    if (remain > 0) {
+      // 建玉が足りない分は損益列があればそれで補完、なければスキップ
+      const rest = { ...e, qty: remain };
+      if (!unpairedClose(rest, dir)) skips.push(`${e.idx+1}行目: ${e.symbol} ${dir === 'buy' ? '売' : '買'}${remain}株 に対応する建玉が見つかりません`);
+    }
+    return true;
+  };
+  const unpairedClose = (e, dir) => {
+    if (!isFinite(e.pnl)) return false;
+    const ck = closeKey(e, dir) + '|unpaired';
+    if (existingKeys.has(ck)) { dupes++; return true; }
+    const perShare = e.pnl / e.qty;
+    const entry = dir === 'buy' ? e.price - perShare : e.price + perShare;
+    newTrades.push({
+      id: genId(), createdAt: e.dt.toISOString(), symbol: e.symbol, symbolName: e.name, direction: dir,
+      entryPrice: Math.round(entry * 100) / 100, qty: e.qty, targetPrice: null, stopLoss: null, emotions: [], reasons: [], entryNote: '（建玉情報なし・損益列から逆算）', chartUrl: null,
+      status: 'closed', closedAt: e.dt.toISOString(), exitPrice: e.price,
+      pnl: Math.round(e.pnl * 100) / 100, pnlPct: Math.round(perShare / entry * 10000) / 100,
+      disciplineKept: null, exitNote: '', source: 'csv', importKey: ck,
+    });
+    return true;
+  };
+
+  for (const e of execs) {
+    if (e.leg === 'open') { openLot(e); continue; }
+    if (e.leg === 'close') {
+      const dir = e.side === 'sell' ? 'buy' : 'sell';
+      if (!closeAgainst(e, dir)) { if (!unpairedClose(e, dir)) skips.push(`${e.idx+1}行目: ${e.symbol} 返済${e.side === 'sell' ? '売' : '買'} に対応する建玉が見つかりません`); }
+      continue;
+    }
+    // 現物など新規/返済の区別がない場合
+    if (e.side === 'buy') {
+      const hasShort = (lots[e.symbol] || []).some(l => l.direction === 'sell' && l.qty > 0);
+      if (hasShort) closeAgainst(e, 'sell'); else openLot(e);
+    } else {
+      const hasLong = (lots[e.symbol] || []).some(l => l.direction === 'buy' && l.qty > 0);
+      if (hasLong) closeAgainst(e, 'buy');
+      else if (!unpairedClose(e, 'buy')) skips.push(`${e.idx+1}行目: ${e.symbol} 売${e.qty}株 に対応する買い建玉が見つかりません（取込期間より前の買い？）`);
+    }
+  }
+
+  const closedN = newTrades.filter(t => t.status === 'closed').length;
+  const openN = newTrades.filter(t => t.status === 'open').length;
+  st.result = { newTrades, closeExisting, skips, dupes };
+
+  summaryEl.innerHTML = [
+    [execs.length, '約定行'], [closedN, '決済済み'], [openN, '保有中（新規）'],
+    [closeExisting.length, '既存建玉を決済'], [dupes, '重複スキップ'], [skips.length, '取込不可'],
+  ].map(([v, l]) => `<div class="import-stat"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
+
+  const previewRows = [...newTrades].sort((a, b) => new Date(b.closedAt || b.createdAt) - new Date(a.closedAt || a.createdAt)).slice(0, 30);
+  prevEl.innerHTML = `<tr><th>日付</th><th>銘柄</th><th>売買</th><th>数量</th><th>In</th><th>Out</th><th>損益</th></tr>` +
+    previewRows.map(t => {
+      const d = new Date(t.closedAt || t.createdAt).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      const pnl = t.pnl === null ? '<span style="color:var(--text-muted)">保有中</span>' : `<span style="color:${t.pnl >= 0 ? 'var(--success)' : 'var(--danger)'};font-weight:700">${t.pnl >= 0 ? '+' : ''}¥${fmtNum(Math.round(t.pnl))}</span>`;
+      return `<tr><td>${d}</td><td>${escHtml(t.symbol)} ${escHtml(t.symbolName || '')}</td><td>${t.direction === 'buy' ? '▲ 買' : '▼ 売'}</td><td>${fmtNum(t.qty)}</td><td>¥${fmtNum(t.entryPrice)}</td><td>${t.exitPrice ? '¥' + fmtNum(t.exitPrice) : '—'}</td><td>${pnl}</td></tr>`;
+    }).join('') + (newTrades.length > 30 ? `<tr><td colspan="7" style="color:var(--text-muted)">…他 ${newTrades.length - 30} 件</td></tr>` : '') +
+    (!newTrades.length ? `<tr><td colspan="7" style="color:var(--text-muted);text-align:center;padding:16px">取り込めるトレードがありません</td></tr>` : '');
+
+  if (skips.length) { skipsEl.style.display = ''; skipsEl.innerHTML = `<b>取り込めなかった行（${skips.length}）</b><br>` + skips.slice(0, 20).map(escHtml).join('<br>') + (skips.length > 20 ? '<br>…' : ''); }
+  else skipsEl.style.display = 'none';
+}
+
+function importCommit() {
+  const st = importState; if (!st || !st.result) return;
+  const { newTrades, closeExisting } = st.result;
+  if (!newTrades.length && !closeExisting.length) { toast('取り込むトレードがありません', 'error'); return; }
+  closeExisting.forEach(c => {
+    const i = trades.findIndex(t => t.id === c.id); if (i < 0) return;
+    trades[i] = { ...trades[i], status: 'closed', closedAt: c.closedAt, exitPrice: c.exitPrice, qty: c.qty, pnl: c.pnl, pnlPct: c.pnlPct, importKey: c.importKey, symbolName: trades[i].symbolName || c.name };
+  });
+  trades = [...newTrades, ...trades].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  saveData(trades);
+  closeImportModal();
+  updateBadge();
+  toast(`${newTrades.length + closeExisting.length}件のトレードを取り込みました`, 'success');
+  const goUntagged = document.getElementById('import-goto-untagged').checked;
+  if (goUntagged && trades.some(isUntagged)) showPage('untagged');
+  else showPage('history');
+}
+
+// ==================== UNTAGGED (まとめてタグ付け) ====================
+function renderUntagged() {
+  const list = trades.filter(isUntagged).sort((a, b) => new Date(b.closedAt || b.createdAt) - new Date(a.closedAt || a.createdAt));
+  document.getElementById('untagged-sub').textContent = list.length ? `${list.length}件が未タグ。感情か根拠を1つ以上選んで保存してください` : 'CSVで取り込んだトレードに感情・根拠を後付けします';
+  const el = document.getElementById('untagged-list');
+  if (!list.length) {
+    el.innerHTML = `<div class="empty-state"><div class="icon">🎉</div><p>未タグのトレードはありません</p><small>「⬆ CSV取込」で約定履歴を取り込むと、ここにまとめて表示されます</small></div>`;
+    return;
+  }
+  el.innerHTML = list.map(t => {
+    const d = new Date(t.closedAt || t.createdAt).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const isClosed = t.status === 'closed';
+    const pnl = isClosed ? `<span class="pnl" style="color:${t.pnl >= 0 ? 'var(--success)' : 'var(--danger)'}">${t.pnl >= 0 ? '+' : ''}¥${fmtNum(Math.abs(Math.round(t.pnl)))} (${t.pnl >= 0 ? '+' : ''}${t.pnlPct}%)</span>` : `<span class="pnl status-badge status-open">● OPEN</span>`;
+    return `
+    <div class="untag-card" id="untag-${t.id}">
+      <div class="untag-head">
+        <div class="trade-direction ${t.direction}" style="width:36px;height:36px;font-size:15px">${t.direction === 'buy' ? '▲' : '▼'}</div>
+        <div>
+          <div class="sym">${escHtml(t.symbol)} <span style="font-weight:400;font-size:13px">${escHtml(t.symbolName || '')}</span></div>
+          <div class="meta">${d}${t.qty ? ' · ' + fmtNum(t.qty) + '株' : ''} · In ¥${fmtNum(t.entryPrice)}${isClosed ? ' → Out ¥' + fmtNum(t.exitPrice) : ''}</div>
+        </div>
+        ${pnl}
+      </div>
+      <div class="untag-label">エントリー時の感情</div>
+      <div class="emotion-tags" data-role="emotions">${emotionChipsHTML()}</div>
+      <div class="untag-label">エントリー根拠</div>
+      <div class="emotion-tags" data-role="reasons">${reasonChipsHTML()}</div>
+      <div class="untag-foot">
+        ${isClosed ? `<button type="button" class="yn-btn yes sm" data-role="yn-yes" onclick="untagYN('${t.id}', true)">✅ ルール守れた</button>
+        <button type="button" class="yn-btn no sm" data-role="yn-no" onclick="untagYN('${t.id}', false)">❌ 守れなかった</button>` : ''}
+        <input class="form-input" data-role="note" placeholder="一言メモ（任意）" onkeydown="if(event.key==='Enter'){event.preventDefault();untagSave('${t.id}')}">
+        <button type="button" class="btn btn-primary btn-sm" onclick="untagSave('${t.id}')">💾 保存</button>
+        <button type="button" class="btn btn-secondary btn-sm" title="タグを付けずに未タグ一覧から外す" onclick="untagSkip('${t.id}')">スキップ</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function untagYN(id, val) {
+  const card = document.getElementById('untag-' + id); if (!card) return;
+  card.dataset.discipline = val ? '1' : '0';
+  card.querySelector('[data-role="yn-yes"]').className = 'yn-btn yes sm' + (val ? ' selected' : '');
+  card.querySelector('[data-role="yn-no"]').className = 'yn-btn no sm' + (!val ? ' selected' : '');
+}
+function untagSave(id) {
+  const card = document.getElementById('untag-' + id); if (!card) return;
+  const emotions = getSelectedEmotionsIn(card.querySelector('[data-role="emotions"]'));
+  const reasons = getSelectedReasons(card.querySelector('[data-role="reasons"]'));
+  if (!emotions.length && !reasons.length) { toast('感情か根拠を1つ以上選んでください', 'error'); return; }
+  const i = trades.findIndex(t => t.id === id); if (i < 0) return;
+  const note = card.querySelector('[data-role="note"]').value.trim();
+  const disc = card.dataset.discipline;
+  trades[i] = {
+    ...trades[i], emotions, reasons, tagged: true,
+    disciplineKept: disc === undefined ? trades[i].disciplineKept : disc === '1',
+    exitNote: note && trades[i].status === 'closed' ? note : trades[i].exitNote,
+    entryNote: note && trades[i].status !== 'closed' ? note : trades[i].entryNote,
+  };
+  saveData(trades);
+  card.style.transition = 'opacity .2s, transform .2s'; card.style.opacity = 0; card.style.transform = 'translateX(20px)';
+  setTimeout(() => { renderUntagged(); updateBadge(); }, 200);
+  toast('記録しました', 'success');
+}
+function untagSkip(id) {
+  const i = trades.findIndex(t => t.id === id); if (i < 0) return;
+  trades[i] = { ...trades[i], tagged: true };
+  saveData(trades);
+  renderUntagged(); updateBadge();
+}
+
 // ==================== INIT ====================
 (function initCapitalInput() {
   const v = loadCapital();
   if (v !== null) document.getElementById('capital-input').value = v;
 })();
+document.getElementById('entry-reason-tags').innerHTML = reasonChipsHTML();
 updateBadge();
 renderDashboard();
 </script>
